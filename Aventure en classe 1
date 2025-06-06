@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventure dans la IIIème République</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #f8f5f2;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .map-point {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .map-point:hover {
+            transform: scale(1.2);
+        }
+        
+        .timeline-item {
+            position: relative;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .quiz-option {
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            background-color: #dbeafe;
+        }
+        
+        .quiz-option.selected-correct {
+            background-color: #bbf7d0;
+            border-color: #22c55e;
+        }
+        
+        .quiz-option.selected-incorrect {
+            background-color: #fecaca;
+            border-color: #ef4444;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: fall 3s ease-in infinite;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50"></div>
+    
+    <!-- Header -->
+    <header class="bg-blue-900 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <svg class="w-10 h-10 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="24" height="24" rx="12" fill="#E2E8F0"/>
+                    <path d="M7 14.5L12 9.5L17 14.5" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 18.5H17" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 5.5H16" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 8.5H16" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h1 class="text-2xl md:text-3xl font-bold">Aventure dans la IIIème République</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-blue-800 px-4 py-2 rounded-lg shadow-inner">
+                    <span class="font-bold">Score:</span> <span id="score">0</span>
+                </div>
+                <div class="bg-blue-800 px-4 py-2 rounded-lg shadow-inner">
+                    <span class="font-bold">Niveau:</span> <span id="level">1</span>/3
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="flex flex-col items-center justify-center py-10">
+            <div class="max-w-3xl text-center">
+                <h2 class="text-4xl font-bold text-blue-900 mb-6">Bienvenue dans l'aventure de la IIIème République!</h2>
+                <p class="text-lg mb-8">Découvre cette période fascinante de l'histoire de France (1870-1940) à travers des jeux, des quiz et des défis interactifs.</p>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <h3 class="text-2xl font-bold text-blue-800 mb-4">Comment jouer?</h3>
+                    <ul class="text-left space-y-3">
+                        <li class="flex items-start">
+                            <span class="text-blue-600 font-bold mr-2">1.</span> 
+                            <span>Explore la chronologie pour découvrir des événements importants</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-blue-600 font-bold mr-2">2.</span> 
+                            <span>Réponds aux quiz pour gagner des points</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-blue-600 font-bold mr-2">3.</span> 
+                            <span>Deviens un expert de la IIIème République!</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button id="start-game" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Commencer l'aventure!
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Container -->
+        <div id="game-container" class="hidden">
+            <!-- Navigation Tabs -->
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <button data-tab="timeline" class="game-tab active-tab text-blue-600 border-b-2 border-blue-500 py-4 px-6 font-medium text-sm md:text-base">
+                            Chronologie
+                        </button>
+                        <button data-tab="personalities" class="game-tab text-gray-500 hover:text-gray-700 py-4 px-6 font-medium text-sm md:text-base">
+                            Personnalités
+                        </button>
+                        <button data-tab="quiz" class="game-tab text-gray-500 hover:text-gray-700 py-4 px-6 font-medium text-sm md:text-base">
+                            Quiz
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Timeline Tab -->
+            <div id="timeline" class="tab-content">
+                <h2 class="text-3xl font-bold text-blue-900 mb-6">Chronologie de la IIIème République</h2>
+                <p class="mb-8">Clique sur les événements pour en savoir plus!</p>
+                
+                <div class="relative pl-8 border-l-2 border-blue-400 space-y-10">
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1870">
+                        <h3 class="text-xl font-bold text-blue-800">1870 - Défaite de Sedan et chute du Second Empire</h3>
+                        <p class="text-gray-600">La France est vaincue par la Prusse, Napoléon III est capturé. La IIIème République est proclamée.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Le 2 septembre 1870, l'armée française est défaite à Sedan. Napoléon III est fait prisonnier. Deux jours plus tard, le 4 septembre, la République est proclamée à Paris.</p>
+                            <p class="mt-2">Cette défaite marque la fin du Second Empire et le début de la IIIème République.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1871">
+                        <h3 class="text-xl font-bold text-blue-800">1871 - Commune de Paris</h3>
+                        <p class="text-gray-600">Révolte populaire à Paris, réprimée par le gouvernement.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Du 18 mars au 28 mai 1871, le peuple de Paris craint le retour de la monarchie. Le peuple se révolte et s'oppose au gouvernement d'Adolphe Thiers.</p>
+                            <p class="mt-2">La répression est sanglante lors de la "Semaine sanglante" (21-28 mai) avec plus de 10 000 morts.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1875">
+                        <h3 class="text-xl font-bold text-blue-800">1875 - Lois constitutionnelles</h3>
+                        <p class="text-gray-600">Adoption des lois qui organisent la IIIème République.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Les lois constitutionnelles de 1875 établissent définitivement le régime républicain en France.</p>
+                            <p class="mt-2">Elles instaurent un président de la République élu pour 7 ans, un Parlement (Chambre des députés et Sénat) et un président du Conseil (Premier ministre).</p>
+                        </div>
+                    </div>
+
+                     <div class="timeline-item pl-6 cursor-pointer" data-event="1880">
+                        <h3 class="text-xl font-bold text-blue-800">1880 - Adoption des symboles républicain</h3>
+                        <p class="text-gray-600">La fête nationale (14 juillet), la devise "Liberté, Egalité, Fraternité".</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Les députés de la IIIème République veulent unifier le peuple français.</p>
+                            <p class="mt-2">Pour cela, ils adoptent des symboles qui représentent la République comme le jour de la fête nationale le 14 juillet, ou encore la devise.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1881-1882">
+                        <h3 class="text-xl font-bold text-blue-800">1881-1882 - Lois Jules Ferry</h3>
+                        <p class="text-gray-600">L'école devient gratuite, laïque et obligatoire.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Jules Ferry fait voter plusieurs lois sur l'éducation. Ces lois ont pour but d'unifier l'enseignement des enfants.</p>
+                            <ul class="list-disc ml-6 mt-2">
+                                <li>1881: Gratuité de l'enseignement primaire</li>
+                                <li>1882: Obligation scolaire de 6 à 13 ans et laïcité de l'enseignement (l'école propose l'instruction civique, l'instruction religieuse est du ressort des parents).</li>
+                            </ul>
+                            <p class="mt-2">Ces lois visent à former des citoyens républicains et à réduire l'influence de l'Église.</p>
+                        </div>
+                    </div>
+
+                     <div class="timeline-item pl-6 cursor-pointer" data-event="1887-1889">
+                        <h3 class="text-xl font-bold text-blue-800">1887-1889 - Mouvement antiparlementaire du Général Boulanger</h3>
+                        <p class="text-gray-600">La IIIème République est menacée par un mouvement de contestation.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Cette contestation est menée par le général Boulanger. Il critique le Parlement (Chambres des Députés et Sénat) qui a trop de pouvoir selon lui.</p>
+                            <p class="mt-2">C'est ce que l'on appelle un mouvement antiparlementaire.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1881-1901">
+                        <h3 class="text-xl font-bold text-blue-800">1881-1901 - Les Grandes lois républicaines sur les libertés</h3>
+                        <p class="text-gray-600">La IIIème République adopte plusieurs lois pour les libertés.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Ces lois visent à étendre les libertés du peuple français. </p>
+                            <ul class="list-disc ml-6 mt-2">
+                                <li>1881: Liberté de réunion</li>
+                                <li>1881: Liberté de la presse (écriture, diffusion) </li>
+                                <li>1884: Les syndicats sont autorisés et peuvent se former sans autorisation du gouvernement </li>
+                                <li>1901: Liberté d'association (possibilité de créer une association) </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1894-1906">
+                        <h3 class="text-xl font-bold text-blue-800">1894-1906 - Affaire Dreyfus</h3>
+                        <p class="text-gray-600">Scandale politique et judiciaire qui divise la France.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Le capitaine Alfred Dreyfus, officier juif, est accusé à tort de trahison et condamné au bagne.</p>
+                            <p class="mt-2">Cette affaire divise la France entre dreyfusards (défenseurs de Dreyfus) et antidreyfusards. Émile Zola publie "J'accuse...!" en 1898.</p>
+                            <p class="mt-2">Dreyfus est finalement réhabilité en 1906. Cette affaire renforce la République et accélère la séparation des Eglises et de l'État.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item pl-6 cursor-pointer" data-event="1905">
+                        <h3 class="text-xl font-bold text-blue-800">1905 - Loi de séparation des Églises et de l'État</h3>
+                        <p class="text-gray-600">Instauration de la laïcité en France.</p>
+                        <div class="hidden event-details mt-4 bg-blue-50 p-4 rounded-lg">
+                            <p>Cette loi fondamentale établit la laïcité en France. Elle garantit la liberté de conscience (croire ou ne pas croire) et le libre exercice des cultes.</p>
+                            <p class="mt-2">L'État ne reconnaît, ne salarie ni ne subventionne aucun culte.</p>
+                            <p class="mt-2">Cette loi est toujours en vigueur aujourd'hui et constitue un pilier de la République française.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Tab -->
+            <div id="quiz" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-blue-900 mb-6">Quiz: Teste tes connaissances!</h2>
+                <p class="mb-8">Réponds aux questions pour gagner des points et progresser dans le jeu.</p>
+                
+                <div id="quiz-container" class="bg-white rounded-xl shadow-lg p-6">
+                    <div id="quiz-progress" class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                        <div id="quiz-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    
+                    <h3 id="quiz-question" class="text-xl font-bold text-blue-800 mb-4"></h3>
+                    
+                    <div id="quiz-options" class="space-y-3 mb-6">
+                        <!-- Options will be inserted here by JavaScript -->
+                    </div>
+                    
+                    <div id="quiz-feedback" class="hidden mb-6 p-4 rounded-lg"></div>
+                    
+                    <div class="flex justify-between">
+                        <button id="quiz-next" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
+                            Question suivante
+                        </button>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Question: <span id="quiz-current">1</span>/<span id="quiz-total">10</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalities Tab -->
+            <div id="personalities" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-blue-900 mb-6">Personnalités marquantes</h2>
+                <p class="mb-8">Découvre les figures importantes qui ont façonné la IIIème République.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Léon Gambetta -->
+                    <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-800 text-white p-4">
+                            <h3 class="text-xl font-bold">Léon Gambetta (1838-1882)</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="40" r="25" fill="#d1d5db"/>
+                                    <circle cx="50" cy="30" r="20" fill="#e5e7eb"/>
+                                    <path d="M25,85 Q50,70 75,85 L75,100 L25,100 Z" fill="#d1d5db"/>
+                                    <path d="M30,40 Q50,50 70,40" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <circle cx="40" cy="30" r="3" fill="#374151"/>
+                                    <circle cx="60" cy="30" r="3" fill="#374151"/>
+                                    <path d="M40,65 Q50,70 60,65" fill="none" stroke="#374151" stroke-width="1"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-700 mb-4">Homme politique républicain qui a organisé la résistance contre les Prussiens et proclamé la République en 1870. </p>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-blue-800">"Là où est la France, là est la patrie."</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Jules Ferry -->
+                    <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-800 text-white p-4">
+                            <h3 class="text-xl font-bold">Jules Ferry (1832-1893)</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="40" r="25" fill="#d1d5db"/>
+                                    <circle cx="50" cy="30" r="20" fill="#e5e7eb"/>
+                                    <path d="M25,85 Q50,70 75,85 L75,100 L25,100 Z" fill="#d1d5db"/>
+                                    <path d="M30,40 Q50,50 70,40" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <circle cx="40" cy="30" r="3" fill="#374151"/>
+                                    <circle cx="60" cy="30" r="3" fill="#374151"/>
+                                    <path d="M45,65 Q50,60 55,65" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <path d="M30,25 Q50,15 70,25" fill="none" stroke="#374151" stroke-width="1"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-700 mb-4">Ministre de l'Instruction publique, il est à l'origine des lois sur l'école gratuite, laïque et obligatoire.</p>
+                            <p class="text-gray-700 mb-4">Ministre des Affaires étrangères, il est en faveur de la politique coloniale et prononce un discours devant les députés en 1885.</p>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-blue-800">"L'inégalité d'éducation est l'une des sources les plus fécondes de l'inégalité sociale."</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Georges Clemenceau -->
+                    <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-800 text-white p-4">
+                            <h3 class="text-xl font-bold">Georges Clemenceau (1841-1929)</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="40" r="25" fill="#d1d5db"/>
+                                    <circle cx="50" cy="30" r="20" fill="#e5e7eb"/>
+                                    <path d="M25,85 Q50,70 75,85 L75,100 L25,100 Z" fill="#d1d5db"/>
+                                    <path d="M30,40 Q50,50 70,40" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <circle cx="40" cy="30" r="3" fill="#374151"/>
+                                    <circle cx="60" cy="30" r="3" fill="#374151"/>
+                                    <path d="M40,65 Q50,60 60,65" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <path d="M35,20 L65,20" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-700 mb-4">Député du parti Républicain radical entre 1871 et 1893. Il prône la séparation des Églises et de l'État et s'oppose à la colonisation.</p>
+                            <p class="text-gray-700 mb-4">Plus tard il défendra le Capitaine Dreyfus dans les journaux.</p>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-blue-800">"Le gouvernenement a pour mission de faire que les bons citoyens soient tranquilles, que les mauvais ne le soient pas."</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Jean Jaurès -->
+                    <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-800 text-white p-4">
+                            <h3 class="text-xl font-bold">Jean Jaurès (1859-1914)</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="40" r="25" fill="#d1d5db"/>
+                                    <circle cx="50" cy="30" r="20" fill="#e5e7eb"/>
+                                    <path d="M25,85 Q50,70 75,85 L75,100 L25,100 Z" fill="#d1d5db"/>
+                                    <path d="M30,40 Q50,50 70,40" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <circle cx="40" cy="30" r="3" fill="#374151"/>
+                                    <circle cx="60" cy="30" r="3" fill="#374151"/>
+                                    <path d="M40,65 Q50,70 60,65" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <path d="M30,15 Q50,25 70,15" fill="none" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-700 mb-4">Homme politique socialiste et pacifiste, fondateur du journal L'Humanité, il prend la défense du Capitaine Dreyfus et participe à la fondation du Parti Socialiste français.</p>
+                            <p class="text-gray-700 mb-4">En 1905, il fonde la Section française de l'Internationale ouvrière (SFIO).</p>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-blue-800">"C'est qu'au fond, il n'y a qu'une seule race : l'humanité."</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alfred Dreyfus -->
+                    <div class="card bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-800 text-white p-4">
+                            <h3 class="text-xl font-bold">Alfred Dreyfus (1859-1935)</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-center mb-4">
+                                <svg class="w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="40" r="25" fill="#d1d5db"/>
+                                    <circle cx="50" cy="30" r="20" fill="#e5e7eb"/>
+                                    <path d="M25,85 Q50,70 75,85 L75,100 L25,100 Z" fill="#d1d5db"/>
+                                    <path d="M30,40 Q50,50 70,40" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <circle cx="40" cy="30" r="3" fill="#374151"/>
+                                    <circle cx="60" cy="30" r="3" fill="#374151"/>
+                                    <path d="M45,65 Q50,63 55,65" fill="none" stroke="#374151" stroke-width="1"/>
+                                    <path d="M35,20 L45,15 L55,15 L65,20" fill="none" stroke="#374151" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-700 mb-4">Officier français d'origine juive injustement accusé de trahison, son affaire divisa profondément la France.</p>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-blue-800">"Je n'ai qu'un but, c'est la lumière, la pleine lumière."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Level Complete Modal -->
+    <div id="level-complete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-blue-900 mb-2">Niveau <span id="completed-level">1</span> terminé!</h2>
+                <p class="text-gray-600 mb-6">Félicitations! Tu as gagné <span id="level-points" class="font-bold text-blue-600">0</span> points.</p>
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h3 class="font-bold text-blue-800 mb-2">Tu as appris:</h3>
+                    <ul id="level-learnings" class="text-left space-y-2">
+                        <!-- Will be filled by JavaScript -->
+                    </ul>
+                </div>
+                <button id="next-level-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Passer au niveau suivant
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Complete Modal -->
+    <div id="game-complete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0116 2v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0V7h-3a1 1 0 010-2h3V2a1 1 0 011-1zm-7 4a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1V7a1 1 0 011-1zm7 4a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0116 10v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3h-3a1 1 0 110-2h3v-3a1 1 0 011-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-blue-900 mb-2">Félicitations!</h2>
+                <p class="text-gray-600 mb-4">Tu as terminé l'aventure de la IIIème République!</p>
+                <p class="text-gray-600 mb-6">Score final: <span id="final-score" class="font-bold text-blue-600">0</span> points</p>
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h3 class="font-bold text-blue-800 mb-2">Tu es maintenant un expert de la IIIème République!</h3>
+                    <p class="text-gray-700">Tu connais les dates clés, les personnages importants et les événements qui ont marqué cette période de l'histoire de France.</p>
+                </div>
+                <button id="restart-game-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Recommencer l'aventure
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Data
+        const gameData = {
+            score: 0,
+            level: 1,
+            maxLevel: 3,
+            currentQuiz: 0,
+            quizCompleted: false,
+            
+           
+            
+            // Quiz questions by level
+            quizzes: {
+                1: [
+                    {
+                        question: "En quelle année commence la IIIème République?",
+                        options: ["1848", "1870", "1875", "1889"],
+                        answer: 1,
+                        explanation: "La IIIème République commence en 1870 après la défaite de Sedan et la chute du Second Empire."
+                    },
+                    {
+                        question: "Quelle région est annexée par l'Allemagne après la guerre de 1870?",
+                        options: ["La Bretagne", "La Normandie", "L'Alsace-Lorraine", "La Provence"],
+                        answer: 2,
+                        explanation: "L'Alsace et une partie de la Lorraine sont annexées par l'Allemagne par le traité de Francfort en 1871."
+                    },
+                    {
+                        question: "Qui est le premier président de la IIIème République?",
+                        options: ["Napoléon III", "Adolphe Thiers", "Léon Gambetta", "Jules Grévy"],
+                        answer: 1,
+                        explanation: "Adolphe Thiers est élu chef du pouvoir exécutif en février 1871, puis président de la République en août 1871."
+                    },
+                    {
+                        question: "Quelle révolte a lieu à Paris en 1871?",
+                        options: ["La Révolution de Juillet", "La Commune de Paris", "Les Trois Glorieuses", "La Révolution de Février"],
+                        answer: 1,
+                        explanation: "La Commune de Paris est une insurrection populaire qui gouverne Paris du 18 mars au 28 mai 1871."
+                    },
+                    {
+                        question: "Quelles sont les couleurs du drapeau français sous la IIIème République?",
+                        options: ["Bleu, blanc, rouge", "Blanc avec fleur de lys", "Bleu et rouge", "Rouge avec faucille et marteau"],
+                        answer: 0,
+                        explanation: "Le drapeau tricolore bleu, blanc, rouge est le drapeau officiel de la France depuis la Révolution française."
+                    },
+                    {
+                        question: "Quelle est la devise de la République française?",
+                        options: ["Travail, Famille, Patrie", "Liberté, Égalité, Fraternité", "Honneur et Patrie", "Unité et Progrès"],
+                        answer: 1,
+                        explanation: "\"Liberté, Égalité, Fraternité\" est la devise de la République française depuis la Révolution."
+                    }
+                ],
+                2: [
+                    {
+                        question: "Qui est l'auteur des lois sur l'école gratuite, laïque et obligatoire?",
+                        options: ["Victor Hugo", "Jules Ferry", "Léon Gambetta", "Georges Clemenceau"],
+                        answer: 1,
+                        explanation: "Jules Ferry, ministre de l'Instruction publique, fait voter ces lois fondamentales en 1881-1882."
+                    },
+                    {
+                        question: "En quelle année est votée la loi de séparation des Églises et de l'État?",
+                        options: ["1875", "1889", "1905", "1918"],
+                        answer: 2,
+                        explanation: "La loi de séparation des Églises et de l'État est votée le 9 décembre 1905."
+                    },
+                    {
+                        question: "Quel officier juif est au centre d'une célèbre affaire judiciaire qui divise la France?",
+                        options: ["Alfred Dreyfus", "Charles de Gaulle", "Philippe Pétain", "Ferdinand Foch"],
+                        answer: 0,
+                        explanation: "L'affaire Dreyfus (1894-1906) divise profondément la société française entre dreyfusards et antidreyfusards."
+                    },
+                    {
+                        question: "Qui écrit le célèbre article \"J'accuse...!\" en défense de Dreyfus?",
+                        options: ["Victor Hugo", "Émile Zola", "Anatole France", "Jean Jaurès"],
+                        answer: 1,
+                        explanation: "Émile Zola publie \"J'accuse...!\" dans le journal L'Aurore le 13 janvier 1898."
+                    },
+                    
+                ],
+                3: [
+                    {
+                        question: "Quel est le nom de la coalition de gauche qui remporte les élections en 1936?",
+                        options: ["L'Union sacrée", "Le Front populaire", "Le Cartel des gauches", "L'Alliance démocratique"],
+                        answer: 1,
+                        explanation: "Le Front populaire, dirigé par Léon Blum, remporte les élections législatives de mai 1936."
+                    },
+                    {
+                        question: "Quelle réforme sociale majeure est instaurée par le Front populaire en 1936?",
+                        options: ["La retraite à 60 ans", "Les congés payés", "Le RMI", "La sécurité sociale"],
+                        answer: 1,
+                        explanation: "Les congés payés (2 semaines) sont instaurés par la loi du 20 juin 1936."
+                    },
+                    {
+                        question: "Qui est surnommé \"le Tigre\" et dirige la France pendant la Première Guerre mondiale?",
+                        options: ["Raymond Poincaré", "Georges Clemenceau", "Aristide Briand", "Paul Deschanel"],
+                        answer: 1,
+                        explanation: "Georges Clemenceau, surnommé \"le Tigre\", est Président du Conseil de 1917 à 1920."
+                    },
+                    {
+                        question: "En quelle année prend fin la IIIème République?",
+                        options: ["1918", "1939", "1940", "1945"],
+                        answer: 2,
+                        explanation: "La IIIème République prend fin le 10 juillet 1940 quand l'Assemblée nationale vote les pleins pouvoirs au Maréchal Pétain."
+                    },
+                    {
+                        question: "Quel régime remplace la IIIème République en 1940?",
+                        options: ["La IVème République", "Le régime de Vichy", "Le Directoire", "Le Consulat"],
+                        answer: 1,
+                        explanation: "Le régime de Vichy, dirigé par le Maréchal Pétain, remplace la République par l'\"État français\"."
+                    }
+                ]
+            },
+            
+            // Learning outcomes by level
+            learnings: {
+                1: [
+                    "Les origines de la IIIème République (1870)",
+                    "La Commune de Paris (1871)",
+                    "Les symboles républicains"
+                ],
+                2: [
+                    "Les lois scolaires de Jules Ferry",
+                    "La laïcité et la séparation des Églises et de l'État",
+                    "L'Affaire Dreyfus et ses conséquences"
+                ],
+                3: [
+                    "Le Front populaire et ses réformes sociales",
+                    "La France pendant la Première Guerre mondiale",
+                    "La fin de la IIIème République (1940)"
+                ]
+            }
+        };
+        
+        // DOM Elements
+        const startGameBtn = document.getElementById('start-game');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const gameTabs = document.querySelectorAll('.game-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        const mapPoints = document.querySelectorAll('.map-point');
+        const mapInfo = document.getElementById('map-info');
+        const mapLocation = document.getElementById('map-location');
+        const mapDescription = document.getElementById('map-description');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const quizNext = document.getElementById('quiz-next');
+        const quizFeedback = document.getElementById('quiz-feedback');
+        const quizCurrent = document.getElementById('quiz-current');
+        const quizTotal = document.getElementById('quiz-total');
+        const quizProgressBar = document.getElementById('quiz-progress-bar');
+        const levelCompleteModal = document.getElementById('level-complete-modal');
+        const completedLevelDisplay = document.getElementById('completed-level');
+        const levelPointsDisplay = document.getElementById('level-points');
+        const levelLearnings = document.getElementById('level-learnings');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const gameCompleteModal = document.getElementById('game-complete-modal');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const confettiContainer = document.getElementById('confetti-container');
+        
+        // Initialize Game
+        function initGame() {
+            // Set initial values
+            scoreDisplay.textContent = gameData.score;
+            levelDisplay.textContent = gameData.level;
+            
+            // Set up event listeners
+            startGameBtn.addEventListener('click', startGame);
+            
+            // Set up tab navigation
+            gameTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    activateTab(tabId);
+                });
+            });
+            
+            // Set up timeline items
+            timelineItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const eventDetails = item.querySelector('.event-details');
+                    if (eventDetails.classList.contains('hidden')) {
+                        // Hide all other event details first
+                        document.querySelectorAll('.event-details').forEach(detail => {
+                            detail.classList.add('hidden');
+                        });
+                        // Show this event's details
+                        eventDetails.classList.remove('hidden');
+                        // Add points for exploring
+                        updateScore(5);
+                    } else {
+                        eventDetails.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Set up map points
+            mapPoints.forEach(point => {
+                point.addEventListener('click', () => {
+                    const locationId = point.getAttribute('data-location');
+                    const locationData = gameData.mapLocations[locationId];
+                    
+                    mapLocation.textContent = locationData.name;
+                    mapDescription.textContent = locationData.description;
+                    mapInfo.classList.remove('hidden');
+                    
+                    // Position the info box near the clicked point
+                    const svgRect = point.getBoundingClientRect();
+                    const mapContainer = document.querySelector('#map svg').parentElement;
+                    const mapRect = mapContainer.getBoundingClientRect();
+                    
+                    const x = svgRect.left - mapRect.left + 20;
+                    const y = svgRect.top - mapRect.top - 30;
+                    
+                    mapInfo.style.left = `${x}px`;
+                    mapInfo.style.top = `${y}px`;
+                    
+                    // Add points for exploring
+                    updateScore(5);
+                });
+            });
+            
+            // Set up quiz navigation
+            quizNext.addEventListener('click', nextQuizQuestion);
+            
+            // Set up level completion
+            nextLevelBtn.addEventListener('click', nextLevel);
+            
+            // Set up game restart
+            restartGameBtn.addEventListener('click', restartGame);
+        }
+        
+        // Start Game
+        function startGame() {
+            welcomeScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            
+            // Initialize the first quiz
+            initQuiz();
+        }
+        
+        // Activate Tab
+        function activateTab(tabId) {
+            // Update tab buttons
+            gameTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active-tab', 'text-blue-600', 'border-b-2', 'border-blue-500');
+                    tab.classList.remove('text-gray-500', 'hover:text-gray-700');
+                } else {
+                    tab.classList.remove('active-tab', 'text-blue-600', 'border-b-2', 'border-blue-500');
+                    tab.classList.add('text-gray-500', 'hover:text-gray-700');
+                }
+            });
+            
+            // Show selected tab content
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+            
+            // Hide map info when switching tabs
+            if (tabId !== 'map') {
+                mapInfo.classList.add('hidden');
+            }
+            
+            // Initialize quiz if needed
+            if (tabId === 'quiz' && !gameData.quizCompleted) {
+                initQuiz();
+            }
+        }
+        
+        // Initialize Quiz
+        function initQuiz() {
+            const currentQuizzes = gameData.quizzes[gameData.level];
+            gameData.currentQuiz = 0;
+            gameData.quizCompleted = false;
+            
+            // Update quiz UI
+            quizTotal.textContent = currentQuizzes.length;
+            loadQuizQuestion();
+        }
+        
+        // Load Quiz Question
+        function loadQuizQuestion() {
+            const currentQuizzes = gameData.quizzes[gameData.level];
+            const currentQuestion = currentQuizzes[gameData.currentQuiz];
+            
+            // Update question number and progress bar
+            quizCurrent.textContent = gameData.currentQuiz + 1;
+            const progressPercentage = ((gameData.currentQuiz) / currentQuizzes.length) * 100;
+            quizProgressBar.style.width = `${progressPercentage}%`;
+            
+            // Set question text
+            quizQuestion.textContent = currentQuestion.question;
+            
+            // Clear previous options and feedback
+            quizOptions.innerHTML = '';
+            quizFeedback.classList.add('hidden');
+            quizNext.disabled = true;
+            
+            // Create option buttons
+            currentQuestion.options.forEach((option, index) => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'quiz-option w-full text-left p-4 border border-gray-300 rounded-lg transition-all';
+                optionBtn.textContent = option;
+                optionBtn.dataset.index = index;
+                
+                optionBtn.addEventListener('click', () => {
+                    // Check answer
+                    const isCorrect = index === currentQuestion.answer;
+                    
+                    // Disable all options
+                    document.querySelectorAll('.quiz-option').forEach(btn => {
+                        btn.disabled = true;
+                    });
+                    
+                    // Style selected option
+                    if (isCorrect) {
+                        optionBtn.classList.add('selected-correct');
+                        quizFeedback.classList.remove('hidden', 'bg-red-100');
+                        quizFeedback.classList.add('bg-green-100', 'text-green-800');
+                        quizFeedback.innerHTML = `<p class="font-bold">Correct!</p><p>${currentQuestion.explanation}</p>`;
+                        updateScore(10);
+                    } else {
+                        optionBtn.classList.add('selected-incorrect');
+                        const correctBtn = document.querySelector(`.quiz-option[data-index="${currentQuestion.answer}"]`);
+                        correctBtn.classList.add('selected-correct');
+                        quizFeedback.classList.remove('hidden', 'bg-green-100');
+                        quizFeedback.classList.add('bg-red-100', 'text-red-800');
+                        quizFeedback.innerHTML = `<p class="font-bold">Incorrect.</p><p>${currentQuestion.explanation}</p>`;
+                    }
+                    
+                    // Enable next button
+                    quizNext.disabled = false;
+                });
+                
+                quizOptions.appendChild(optionBtn);
+            });
+        }
+        
+        // Next Quiz Question
+        function nextQuizQuestion() {
+            const currentQuizzes = gameData.quizzes[gameData.level];
+            gameData.currentQuiz++;
+            
+            if (gameData.currentQuiz < currentQuizzes.length) {
+                loadQuizQuestion();
+            } else {
+                // Quiz completed
+                gameData.quizCompleted = true;
+                quizQuestion.textContent = "Quiz terminé!";
+                quizOptions.innerHTML = '';
+                quizFeedback.classList.remove('hidden', 'bg-red-100');
+                quizFeedback.classList.add('bg-blue-100', 'text-blue-800');
+                quizFeedback.innerHTML = `<p class="font-bold">Félicitations!</p><p>Tu as terminé le quiz du niveau ${gameData.level}.</p>`;
+                quizNext.disabled = true;
+                
+                // Update progress bar to 100%
+                quizProgressBar.style.width = '100%';
+                
+                // Check if level is complete
+                checkLevelCompletion();
+            }
+        }
+        
+        // Update Score
+        function updateScore(points) {
+            gameData.score += points;
+            scoreDisplay.textContent = gameData.score;
+        }
+        
+        // Check Level Completion
+        function checkLevelCompletion() {
+            if (gameData.quizCompleted) {
+                // Show level complete modal
+                completedLevelDisplay.textContent = gameData.level;
+                levelPointsDisplay.textContent = gameData.score;
+                
+                // Add learning outcomes
+                levelLearnings.innerHTML = '';
+                gameData.learnings[gameData.level].forEach(learning => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>${learning}</span>
+                    `;
+                    levelLearnings.appendChild(li);
+                });
+                
+                // Show appropriate button
+                if (gameData.level < gameData.maxLevel) {
+                    nextLevelBtn.textContent = 'Passer au niveau suivant';
+                } else {
+                    nextLevelBtn.textContent = 'Terminer le jeu';
+                }
+                
+                // Show confetti
+                createConfetti();
+                
+                // Show modal after a short delay
+                setTimeout(() => {
+                    levelCompleteModal.classList.remove('hidden');
+                }, 1000);
+            }
+        }
+        
+        // Next Level
+        function nextLevel() {
+            levelCompleteModal.classList.add('hidden');
+            
+            if (gameData.level < gameData.maxLevel) {
+                // Go to next level
+                gameData.level++;
+                levelDisplay.textContent = gameData.level;
+                
+                // Reset quiz
+                gameData.quizCompleted = false;
+                initQuiz();
+                
+                // Switch to timeline tab
+                activateTab('timeline');
+            } else {
+                // Game completed
+                finalScoreDisplay.textContent = gameData.score;
+                
+                // Show confetti
+                createConfetti();
+                
+                // Show game complete modal
+                gameCompleteModal.classList.remove('hidden');
+            }
+        }
+        
+        // Restart Game
+        function restartGame() {
+            // Reset game data
+            gameData.score = 0;
+            gameData.level = 1;
+            gameData.currentQuiz = 0;
+            gameData.quizCompleted = false;
+            
+            // Update UI
+            scoreDisplay.textContent = gameData.score;
+            levelDisplay.textContent = gameData.level;
+            
+            // Hide modals
+            gameCompleteModal.classList.add('hidden');
+            
+            // Reset quiz
+            initQuiz();
+            
+            // Switch to welcome screen
+            gameContainer.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+        
+        // Create Confetti
+        function createConfetti() {
+            confettiContainer.innerHTML = '';
+            
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                
+                confettiContainer.appendChild(confetti);
+            }
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94b056a3614cbd24',t:'MTc0OTEzMzUxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
